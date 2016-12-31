@@ -1,10 +1,11 @@
 import Logger, { LEVEL_NONE, LEVEL_EMERGENCY, LEVEL_ALERT, LEVEL_CRITICAL, LEVEL_ERROR, LEVEL_WARNING, LEVEL_NOTICE, LEVEL_INFO, LEVEL_DEBUG, LEVEL_ALL } from './lib/Logger';
 import ConsoleAdapter from './lib/ConsoleAdapter';
+import HtmlListAdapter from './lib/HtmlListAdapter';
 
 const logger = new Logger({
     level: LEVEL_ALL,
     appendLogId: true,
-    adapters: [new ConsoleAdapter],
+    adapters: [new ConsoleAdapter, new HtmlListAdapter({})],
     contextDecorator: (context) => {
         context.someProperty = 'someValue';
         return context;
