@@ -108,19 +108,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Logger
 	 * Specification: https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-3-logger-interface.md
 	 * @todo - implement flush
+	 * @param   config.level            Level to log (LEVEL_EMERGENCY, LEVEL_WARNING, LEVEL_DEBUG, etc)
+	 * @param   config.adapters         Array with adapters (functions or objects with a log method)
+	 * @param   config.appendLogId      True to automatically append the log id to the log (" (ref: 000000000000)")
+	 * @param   config.contextDecorator Function that decorates the context object, before every log call, and that returns the decorated result
 	 */
 	
 	var Logger = function () {
-	    function Logger(config) {
+	    function Logger() {
+	        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : config,
+	            _ref$level = _ref.level,
+	            level = _ref$level === undefined ? LEVEL_ALL : _ref$level,
+	            _ref$adapters = _ref.adapters,
+	            adapters = _ref$adapters === undefined ? [] : _ref$adapters,
+	            _ref$appendLogId = _ref.appendLogId,
+	            appendLogId = _ref$appendLogId === undefined ? false : _ref$appendLogId,
+	            contextDecorator = _ref.contextDecorator;
+	
 	        _classCallCheck(this, Logger);
 	
-	        this._level = config.hasOwnProperty('level') ? config.level : LEVEL_ALL;
-	        this._adapters = config.hasOwnProperty('adapters') && config.adapters.hasOwnProperty('length') ? config.adapters : [];
-	        this._appendLogId = config.appendLogId === true;
-	        this._contextDecorator = config.hasOwnProperty('contextDecorator') ? config.contextDecorator : null;
+	        this._level = level;
+	        this._adapters = adapters;
+	        this._appendLogId = appendLogId;
+	        this._contextDecorator = contextDecorator;
 	        this._instanceContext = {};
 	
-	        // create alias (console.log)
+	        // create alias
 	        this.warn = this.warning;
 	    }
 	
@@ -215,6 +228,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	            return this.log(DEBUG, message, context);
 	        }
+	
+	        /**
+	         * Log
+	         * @param   string  Log type (error, warning, info, etc (check consts))
+	         * @param   string  Log message, optional with placeholders to replace with context data
+	         * @param   object  context data that will be used replace with placeholders in message
+	         */
+	
 	    }, {
 	        key: 'log',
 	        value: function log(type, message) {
@@ -227,12 +248,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	            if (this._adapters.length && (this._level & typeLevel) > 0) {
 	                var _ret = function () {
-	                    '';
 	                    var preparedContext = _this._prepareAndDecorateContext(context, { _id: id }),
 	                        log = _this._prepareAndGetLog(message, preparedContext);
 	
 	                    _this._adapters.forEach(function (adapter) {
-	                        return adapter.log(type, log);
+	                        return typeof adapter == 'function' ? adapter(type, log) : adapter.log(type, log);
 	                    });
 	                    return {
 	                        v: id
@@ -288,7 +308,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: '_genId',
 	        value: function _genId() {
-	            return Date.now();
+	            return Date.now() + Math.floor(Math.random() * 9999 + 1);
 	        }
 	    }]);
 	

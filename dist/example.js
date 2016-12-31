@@ -64,12 +64,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _ConsoleAdapter2 = _interopRequireDefault(_ConsoleAdapter);
 	
+	var _HtmlListAdapter = __webpack_require__(3);
+	
+	var _HtmlListAdapter2 = _interopRequireDefault(_HtmlListAdapter);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	var logger = new _Logger2.default({
 	    level: _Logger.LEVEL_ALL,
 	    appendLogId: true,
-	    adapters: [new _ConsoleAdapter2.default()],
+	    adapters: [new _ConsoleAdapter2.default(), new _HtmlListAdapter2.default({})],
 	    contextDecorator: function contextDecorator(context) {
 	        context.someProperty = 'someValue';
 	        return context;
@@ -136,19 +140,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Logger
 	 * Specification: https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-3-logger-interface.md
 	 * @todo - implement flush
+	 * @param   config.level            Level to log (LEVEL_EMERGENCY, LEVEL_WARNING, LEVEL_DEBUG, etc)
+	 * @param   config.adapters         Array with adapters (functions or objects with a log method)
+	 * @param   config.appendLogId      True to automatically append the log id to the log (" (ref: 000000000000)")
+	 * @param   config.contextDecorator Function that decorates the context object, before every log call, and that returns the decorated result
 	 */
 	
 	var Logger = function () {
-	    function Logger(config) {
+	    function Logger() {
+	        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : config,
+	            _ref$level = _ref.level,
+	            level = _ref$level === undefined ? LEVEL_ALL : _ref$level,
+	            _ref$adapters = _ref.adapters,
+	            adapters = _ref$adapters === undefined ? [] : _ref$adapters,
+	            _ref$appendLogId = _ref.appendLogId,
+	            appendLogId = _ref$appendLogId === undefined ? false : _ref$appendLogId,
+	            contextDecorator = _ref.contextDecorator;
+	
 	        _classCallCheck(this, Logger);
 	
-	        this._level = config.hasOwnProperty('level') ? config.level : LEVEL_ALL;
-	        this._adapters = config.hasOwnProperty('adapters') && config.adapters.hasOwnProperty('length') ? config.adapters : [];
-	        this._appendLogId = config.appendLogId === true;
-	        this._contextDecorator = config.hasOwnProperty('contextDecorator') ? config.contextDecorator : null;
+	        this._level = level;
+	        this._adapters = adapters;
+	        this._appendLogId = appendLogId;
+	        this._contextDecorator = contextDecorator;
 	        this._instanceContext = {};
 	
-	        // create alias (console.log)
+	        // create alias
 	        this.warn = this.warning;
 	    }
 	
@@ -243,6 +260,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	            return this.log(DEBUG, message, context);
 	        }
+	
+	        /**
+	         * Log
+	         * @param   string  Log type (error, warning, info, etc (check consts))
+	         * @param   string  Log message, optional with placeholders to replace with context data
+	         * @param   object  context data that will be used replace with placeholders in message
+	         */
+	
 	    }, {
 	        key: 'log',
 	        value: function log(type, message) {
@@ -255,12 +280,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	            if (this._adapters.length && (this._level & typeLevel) > 0) {
 	                var _ret = function () {
-	                    '';
 	                    var preparedContext = _this._prepareAndDecorateContext(context, { _id: id }),
 	                        log = _this._prepareAndGetLog(message, preparedContext);
 	
 	                    _this._adapters.forEach(function (adapter) {
-	                        return adapter.log(type, log);
+	                        return typeof adapter == 'function' ? adapter(type, log) : adapter.log(type, log);
 	                    });
 	                    return {
 	                        v: id
@@ -316,7 +340,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: '_genId',
 	        value: function _genId() {
-	            return Date.now();
+	            return Date.now() + Math.floor(Math.random() * 9999 + 1);
 	        }
 	    }]);
 	
@@ -362,9 +386,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	         * Public methods
 	         */
 	
-	        value: function log(level, message) {
-	            if (level in ConsoleAdapter._levelToMethodMapping) {
-	                console[ConsoleAdapter._levelToMethodMapping[level]](message);
+	        value: function log(type, message) {
+	            if (type in ConsoleAdapter._levelToMethodMapping) {
+	                console[ConsoleAdapter._levelToMethodMapping[type]](message);
 	            }
 	        }
 	    }]);
@@ -372,6 +396,122 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return ConsoleAdapter;
 	}(), _class._levelToMethodMapping = (_class$_levelToMethod = {}, _defineProperty(_class$_levelToMethod, _Logger.EMERGENCY, 'error'), _defineProperty(_class$_levelToMethod, _Logger.ALERT, 'error'), _defineProperty(_class$_levelToMethod, _Logger.CRITICAL, 'error'), _defineProperty(_class$_levelToMethod, _Logger.ERROR, 'error'), _defineProperty(_class$_levelToMethod, _Logger.WARNING, 'warn'), _defineProperty(_class$_levelToMethod, _Logger.NOTICE, 'warn'), _defineProperty(_class$_levelToMethod, _Logger.INFO, 'info'), _defineProperty(_class$_levelToMethod, _Logger.DEBUG, 'log'), _class$_levelToMethod), _temp);
 	exports.default = ConsoleAdapter;
+
+/***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.default = undefined;
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _class, _temp, _class$_typeToColorMa;
+	
+	var _Logger = __webpack_require__(1);
+	
+	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	/**
+	 * HtmlListAdapter
+	 */
+	var HtmlListAdapter = (_temp = _class = function () {
+	    function HtmlListAdapter() {
+	        var _this = this;
+	
+	        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : config,
+	            targetElement = _ref.targetElement,
+	            _ref$listType = _ref.listType,
+	            listType = _ref$listType === undefined ? 'ul' : _ref$listType,
+	            _ref$listClassName = _ref.listClassName,
+	            listClassName = _ref$listClassName === undefined ? '' : _ref$listClassName,
+	            _ref$listItemClassNam = _ref.listItemClassName,
+	            listItemClassName = _ref$listItemClassNam === undefined ? '' : _ref$listItemClassNam,
+	            _ref$isColorModeEnabl = _ref.isColorModeEnabled,
+	            isColorModeEnabled = _ref$isColorModeEnabl === undefined ? true : _ref$isColorModeEnabl;
+	
+	        _classCallCheck(this, HtmlListAdapter);
+	
+	        this._targetElement = targetElement;
+	        this._listType = listType;
+	        this._listClassName = listClassName;
+	        this._listItemClassName = listItemClassName;
+	        this._isColorModeEnabled = isColorModeEnabled;
+	
+	        this._isListInitialized = false;
+	        this._listElement = null;
+	
+	        this._isReady = new Promise(function (resolve) {
+	            _this._isReadyResolver = resolve;
+	        });
+	
+	        document.addEventListener('DOMContentLoaded', this._isReadyResolver);
+	        window.addEventListener('load', this._isReadyResolver);
+	
+	        if (document.readyState === 'complete') {
+	            this._isReadyResolver();
+	        }
+	    }
+	
+	    /**
+	     * Public methods
+	     */
+	
+	    _createClass(HtmlListAdapter, [{
+	        key: 'log',
+	        value: function log(type, _log) {
+	            var _this2 = this;
+	
+	            this._isReady.then(function () {
+	                if (!_this2._isListInitialized) {
+	                    _this2._initList();
+	                }
+	
+	                _this2._listElement.appendChild(_this2._createAndGetNewListItem(type, _log));
+	            });
+	        }
+	
+	        /**
+	         * Protected methods
+	         */
+	
+	    }, {
+	        key: '_initList',
+	        value: function _initList() {
+	            if (!this._isListInitialized) {
+	                if (!this._targetFrame) {
+	                    this._targetElement = document.body;
+	                }
+	
+	                this._listElement = document.createElement(this._listType);
+	                this._listElement.className = this._listClassName;
+	                this._targetElement.appendChild(this._listElement);
+	
+	                this._isListInitialized = true;
+	            }
+	        }
+	    }, {
+	        key: '_createAndGetNewListItem',
+	        value: function _createAndGetNewListItem(type, log) {
+	            var item = document.createElement('li');
+	            item.textContent = log;
+	            item.className = this._listItemClassName + ('' + type.toLowerCase());
+	            if (this._isColorModeEnabled) {
+	                item.style.color = HtmlListAdapter._typeToColorMapping[type];
+	            }
+	            return item;
+	        }
+	    }]);
+	
+	    return HtmlListAdapter;
+	}(), _class._typeToColorMapping = (_class$_typeToColorMa = {}, _defineProperty(_class$_typeToColorMa, _Logger.EMERGENCY, '#F40404'), _defineProperty(_class$_typeToColorMa, _Logger.ALERT, '#F42C04'), _defineProperty(_class$_typeToColorMa, _Logger.CRITICAL, '#F42C04'), _defineProperty(_class$_typeToColorMa, _Logger.ERROR, '#F42C04'), _defineProperty(_class$_typeToColorMa, _Logger.WARNING, '#F46804'), _defineProperty(_class$_typeToColorMa, _Logger.NOTICE, '#F4A404'), _defineProperty(_class$_typeToColorMa, _Logger.INFO, '#0440F4'), _defineProperty(_class$_typeToColorMa, _Logger.DEBUG, '#212121'), _class$_typeToColorMa), _temp);
+	exports.default = HtmlListAdapter;
 
 /***/ }
 /******/ ])
