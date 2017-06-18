@@ -1,4 +1,11 @@
-module.export.default = require('./lib/Logger');
+'use strict'
+import Logger from './lib/Logger';
+import ConsoleAdapter from './lib/ConsoleAdapter';
+import HtmlListAdapter from './lib/HtmlListAdapter';
 
-module.export.ConsoleAdapter = require('./lib/ConsoleAdapter');
-module.export.HtmlListAdapter = require('./lib/HtmlListAdapter');
+export {
+    ConsoleAdapter,
+    HtmlListAdapter,
+};
+
+export default Logger;
